@@ -102,7 +102,6 @@ function App() {
       {messageStatus && <p className="message-status" role="status">{messageStatus}</p>}
     </main>
     {page === 'story' && !finished && <button className="pause-button" aria-label={story.paused ? 'Resume story' : 'Pause story'} onClick={() => { story.togglePause(); if (!story.paused) audio.current?.pause(); else if (withMusic) void audio.current?.play().catch(() => {}) }}>{story.paused ? '▷' : 'Ⅱ'}</button>}
-    <span className="nyxen-signature">nyxen</span>
   </div>
 }
 

@@ -61,7 +61,6 @@ button:disabled { opacity: .4; cursor: default; }
 .final-love { opacity: 1; transition: opacity .7s ease; }
 .final-love[data-leaving='true'] { opacity: 0; }
 .final-love h1 em { color: #e5bacb; }
-.nyxen-signature { position: absolute; z-index: 2; right: max(24px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); font: italic 16px/1.4 Georgia, serif; letter-spacing: 1px; color: currentColor; opacity: .65; pointer-events: none; }
 .replay-space { min-height: 178px; display: grid; align-content: center; margin-top: 20px; }
 .replay-question { margin: 0; font: 400 clamp(27px, 3.5vw, 38px)/1.4 Georgia, serif; color: #fff7ee; letter-spacing: -.02em; }
 .personal-signoff { font: italic 28px/1.6 Georgia, serif; color: #e5bacb; animation: soft-appear .6s ease; }
