@@ -1,6 +1,6 @@
 # A Little Universe for Two — Detailed Project Plan
 
-**Status:** Milestone 1 implemented for review. Milestone 2 controller foundation implemented and tested with synthetic silence; real-recording acceptance remains blocked. Asset and timing approval gates remain open.
+**Status:** Mobile-first illustrated preview implemented with a user-supplied soundtrack in local development only. M2 controller tests and direct real-file seeking checks pass. Commercial music rights, listening-calibrated timing, character review, and release QA remain open; do not treat the preview as approved for public deployment.
 
 **Working title:** A Little Universe for Two  
 **Tagline:** A small story. An infinite kind of love.

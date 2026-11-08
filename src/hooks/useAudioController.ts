@@ -25,6 +25,8 @@ export function useAudioController(track: TrackDefinition | null) {
   const frame = useRef(0)
   const active = useRef(false)
   const semantic = useRef('')
+  const visualRenderer = useRef<((state: ResolvedStory) => void) | null>(null)
+  const lastFrame = useRef<ResolvedStory | null>(null)
   const [hasStarted, setHasStarted] = useState(false)
   const [status, setStatus] = useState<PlaybackStatus>('invitation')
   const [error, setError] = useState('')
@@ -40,19 +42,30 @@ export function useAudioController(track: TrackDefinition | null) {
     setStatus(next)
   }, [])
 
-  const reconcile = useCallback(() => {
+  const reconcile = useCallback((sampleBuffers = true) => {
     const audio = audioRef.current
     if (!audio || !track || !available) return
     const next = resolveStoryTime(track, audio.currentTime)
+    lastFrame.current = next
+    visualRenderer.current?.(next)
     // Scene timelines can read localTime directly; React only handles semantic changes.
     const key = `${next.chapterIndex}:${next.cue?.id ?? ''}:${next.completed}`
     if (key !== semantic.current) {
       semantic.current = key
       setResolved(next)
     }
-    const ranges = Array.from({ length: audio.buffered.length }, (_, index) => `${audio.buffered.start(index).toFixed(1)}–${audio.buffered.end(index).toFixed(1)}`)
-    Object.assign(diagnosticRef.current, { currentTime: audio.currentTime, duration: audio.duration, localTime: next.localTime, scene: next.sceneId, cue: next.cue?.id ?? 'none', intent: intent.current, readyState: audio.readyState, seeking: audio.seeking, buffered: ranges.join(', ') || 'none' })
+    if (sampleBuffers) {
+      const ranges = Array.from({ length: audio.buffered.length }, (_, index) => `${audio.buffered.start(index).toFixed(1)}–${audio.buffered.end(index).toFixed(1)}`)
+      diagnosticRef.current.buffered = ranges.join(', ') || 'none'
+    }
+    Object.assign(diagnosticRef.current, { currentTime: audio.currentTime, duration: audio.duration, localTime: next.localTime, scene: next.sceneId, cue: next.cue?.id ?? 'none', intent: intent.current, readyState: audio.readyState, seeking: audio.seeking })
   }, [track, available])
+
+  const registerRenderer = useCallback((renderer: (state: ResolvedStory) => void) => {
+    visualRenderer.current = renderer
+    if (lastFrame.current) renderer(lastFrame.current)
+    return () => { if (visualRenderer.current === renderer) visualRenderer.current = null }
+  }, [])
 
   const pause = useCallback(() => {
     intent.current = 'pause'
@@ -86,7 +99,7 @@ export function useAudioController(track: TrackDefinition | null) {
         if (intent.current === 'pause') audio.pause()
         return
       }
-      reconcile()
+      reconcile(false)
       // 'playing' owns visual startup, not resolution of this promise.
     }).catch(() => {
       if (requestId.current !== id) return
@@ -120,7 +133,7 @@ export function useAudioController(track: TrackDefinition | null) {
     let disposed = false
     const tick = () => {
       if (disposed) return
-      reconcile()
+      reconcile(false)
       if (intent.current === 'play' && !audio.paused && !audio.ended) frame.current = requestAnimationFrame(tick)
     }
     const record = (event: Event) => {
@@ -203,5 +216,5 @@ export function useAudioController(track: TrackDefinition | null) {
     setVolume(bounded)
   }
 
-  return { audioRef, available, validationErrors, hasStarted, status, error, resolved, muted, volume, diagnosticRef, play, pause, seekChapter, toggleMute, changeVolume }
+  return { audioRef, available, validationErrors, hasStarted, status, error, resolved, muted, volume, diagnosticRef, registerRenderer, play, pause, seekChapter, toggleMute, changeVolume }
 }

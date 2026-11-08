@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# User-supplied commercial recording: local preview only, not cleared for release.
+/beabadoobee - Glue Song (Official Music Video).mp3
