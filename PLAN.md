@@ -1,6 +1,6 @@
 # A Little Universe for Two — Detailed Project Plan
 
-**Status:** Implementation authorized. Milestone 1 invitation and visual foundation in progress; asset and timing approval gates remain open.
+**Status:** Milestone 1 implemented for review. Milestone 2 controller foundation implemented and tested with synthetic silence; real-recording acceptance remains blocked. Asset and timing approval gates remain open.
 
 **Working title:** A Little Universe for Two  
 **Tagline:** A small story. An infinite kind of love.
@@ -666,4 +666,4 @@ Log locally only; do not send analytics. Under CPU/network throttling, verify dr
 - **Gate C — Timing approval:** Calibrate and approve cue sheet against the exact recording before synchronized scene polish.
 - **Gate D — Release approval:** Review final browser coverage, rights register, and remaining limitations before public deployment.
 
-**Current implementation notes:** Existing Vite/React/TypeScript starter confirmed in this directory. User authorized implementation and necessary dependency installation. Tailwind v4 and its Vite plugin are installed; other animation packages are deferred until needed. Invitation and silent manual reading preview implemented. System font fallbacks are in use pending licensed font files. Music, character poses, deployment target, and synchronized timing remain unapproved. Proceed scene by scene after first-frame review.
+**Current implementation notes:** Existing Vite/React/TypeScript starter confirmed in this directory. User authorized implementation and necessary dependency installation. Tailwind v4 and its Vite plugin are installed; other animation packages are deferred until needed. Invitation and silent manual reading preview implemented; decorative eyebrow labels removed per user direction. M2 adds a persistent audio host/controller, typed/validated cues, deterministic timestamp resolution, playback/recovery controls, and development diagnostics. Eight resolver tests plus Chromium synthetic-audio lifecycle checks cover the foundation (see `docs/timing-qa.md`). No approved track is configured, so production remains in manual mode. System font fallbacks are in use pending licensed font files. Music, character poses, deployment target, and synchronized timing remain unapproved. Do not mark recording-dependent M2 acceptance complete until an approved file and calibrated cue sheet have been verified.
