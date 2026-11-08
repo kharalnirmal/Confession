@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { MessageOpening, SpecialReveal } from './components/MessageOpening'
 import { FloralFrame } from './components/FloralFrame'
+import { NightSky } from './components/NightSky'
 import { EndingSequence } from './components/EndingSequence'
 import { StoryIllustration } from './components/StoryIllustration'
 import { chapters } from './content/story'
-import { approvedTrack, previewTrack } from './content/cueSheet'
+import { soundtrack } from './content/cueSheet'
 import { useStoryPlayback } from './hooks/useStoryPlayback'
 import './App.css'
 
-const track = approvedTrack ?? previewTrack
+const track = soundtrack
 type Page = 'welcome' | 'draft' | 'reveal' | 'story'
 
 function App() {
@@ -74,8 +75,9 @@ function App() {
   }
 
   return <div className="experience" data-scene={page === 'story' ? story.chapter : 'invitation'} data-page={finished ? 'ending' : page} data-motion={motion ? 'full' : 'reduced'} data-playing={page === 'story' && !story.paused}>
-    <audio ref={audio} src={track?.src} preload="none" loop aria-hidden="true" />
+    <audio ref={audio} src={track.src} preload="metadata" loop aria-hidden="true" onError={() => setMessageStatus('Music couldn’t load. You can still enjoy the story without it.')} />
     <FloralFrame />
+    {page === 'story' && story.chapter >= 2 && <NightSky />}
     <main id="story" className={page === 'story' && !finished ? 'story-main cinematic' : 'story-main'}>
       {page === 'welcome' && <section className="welcome-panel" aria-labelledby="welcome-title">
         <span className="welcome-heart" aria-hidden="true">♡</span>

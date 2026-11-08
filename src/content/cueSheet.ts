@@ -1,14 +1,10 @@
 import type { TrackDefinition } from '../types/story'
 
-// Public-release configuration remains empty until rights and timing are approved.
-export const approvedTrack: TrackDefinition | null = null
-
-// User-supplied file served by Vite from the project root ONLY during development.
-// Deliberately not imported/copied into public/ or the production bundle.
-// Waveform-informed preview boundaries, NOT listening-calibrated musical landmarks.
-export const previewTrack: TrackDefinition | null = import.meta.env.DEV ? {
-  src: `${import.meta.env.BASE_URL}${encodeURIComponent('beabadoobee - Glue Song (Official Music Video).mp3')}`,
-  assetVersion: 'sha256:289a5fb3c1889a590f8a6e9489a29639c0417e2cc5b9af1c5862ffd450f30ac4',
+// User-supplied recording, packaged for deployment at the user's request.
+// Public hosting still requires the appropriate music rights.
+export const soundtrack: TrackDefinition = {
+  src: `${import.meta.env.BASE_URL}music/glue-song.m4a`,
+  assetVersion: 'sha256:dd0b29d33d38ff745d0d5e5fc1cd523ab5a82ed4b4737b8882897af5d4d3a73d',
   expectedDuration: 136.2546875,
   chapters: [
     { sceneId: 'encounter', start: 0, end: 28 },
@@ -32,4 +28,4 @@ export const previewTrack: TrackDefinition | null = import.meta.env.DEV ? {
     { id: 'choose', sceneId: 'confession', start: 119, end: 126, text: "In every version of my story, I'd still choose you." },
     { id: 'stay', sceneId: 'afterglow', start: 126, end: 136.2546875, text: 'There’s room for us here.' },
   ],
-} : null
+}

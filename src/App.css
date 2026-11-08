@@ -36,12 +36,19 @@ button:disabled { opacity: .4; cursor: default; }
 .chapter-panel[data-closing='true'] { opacity: 0; }
 .illustration-space { position: relative; width: 100%; height: min(76svh, 680px); display: grid; place-items: center; }
 .scene-current, .scene-previous { position: absolute; inset: 0; }
-.scene-current { animation: soft-appear .8s ease-in-out both; }
-.scene-previous { pointer-events: none; animation: scene-away .8s ease-in-out both; }
+.scene-current { animation: soft-appear 1.6s cubic-bezier(.4, 0, .2, 1) both; }
+.scene-previous { pointer-events: none; animation: scene-away 1.6s cubic-bezier(.4, 0, .2, 1) both; }
 .story-illustration { display: block; width: 100%; height: 100%; overflow: visible; }
+.night-sky { position: absolute; inset: 0 0 auto; height: clamp(160px, 32svh, 320px); z-index: 0; pointer-events: none; animation: soft-appear 2s ease both; }
+.sky-moon { position: absolute; top: -14px; right: 9%; width: clamp(76px, 8vw, 110px); height: auto; }
+.sky-star { position: absolute; display: block; border-radius: 50%; background: #fff1d940; box-shadow: 0 0 7px 2px #f4dbb32b; animation: sky-shimmer 7s ease-in-out infinite; }
+.sky-star svg { display: block; width: 100%; height: 100%; overflow: visible; }
+@keyframes sky-shimmer { 0%, 100% { opacity: var(--star-opacity); } 50% { opacity: calc(var(--star-opacity) * .55); } }
+.experience[data-playing='false'] .sky-star { animation-play-state: paused; }
+@media (max-width: 760px) { .sky-star:nth-child(2n) { display: none; } }
 @keyframes scene-away { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
 .caption-space { display: grid; place-items: center; height: 200px; padding: 20px 0; }
-.chapter-copy { width: 100%; max-width: 470px; margin: 0; text-align: left; font: italic 500 clamp(32px, 3.6vw, 51px)/1.4 'Cormorant Garamond', Georgia, serif; letter-spacing: -.01em; text-wrap: balance; animation: soft-appear .4s ease both; }
+.chapter-copy { width: 100%; max-width: 470px; margin: 0; text-align: left; font: 400 clamp(30px, 3.4vw, 48px)/1.2 'Lora', Georgia, serif; letter-spacing: -.015em; text-wrap: balance; animation: soft-appear .9s cubic-bezier(.4, 0, .2, 1) both; }
 .pause-button { position: absolute; z-index: 3; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: 44px; height: 44px; border: 1px solid #ad8b9d40; border-radius: 50%; color: inherit; background: #ffffff08; font-size: 19px; opacity: .6; }
 .pause-button:hover { opacity: 1; background: #a68c9c14; }
 .experience[data-scene='2'], .experience[data-scene='3'], .experience[data-scene='4'] { color: #fff7ee; --scene-muted: #cfc1ca; }

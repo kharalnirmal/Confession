@@ -12,7 +12,24 @@ interface Props {
   registerRenderer: (renderer: (state: ResolvedStory) => void) => () => void
 }
 
-const stars = [[95, 80], [160, 115], [220, 25], [285, 55], [360, 28], [430, 80], [505, 65], [463, 190], [115, 210], [330, 125], [60, 148], [540, 145]]
+const heartVertices = [[300, 188], [253, 155], [211, 117], [193, 80], [205, 45], [237, 30], [272, 39], [300, 67], [328, 39], [363, 30], [395, 45], [407, 80], [389, 117], [347, 155]]
+  .map(([x, y]) => [300 + (x - 300) * .68, y * .68 - 8])
+const heartStars = heartVertices.flatMap((point, index) => {
+  const next = heartVertices[(index + 1) % heartVertices.length]
+  return [point, [(point[0] + next[0]) / 2, (point[1] + next[1]) / 2]]
+})
+const heartOutline = `${heartStars.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join('')}Z`
+const surroundingStars = (() => {
+  let seed = 947
+  const random = () => { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646 }
+  const points: number[][] = []
+  for (let attempt = 0; attempt < 300 && points.length < 27; attempt++) {
+    const point = [65 + random() * 470, 8 + random() * 126]
+    if ([...heartStars, ...points].some(([x, y]) => Math.hypot(x - point[0], y - point[1]) < 17)) continue
+    points.push(point)
+  }
+  return points
+})()
 
 export function StoryIllustration({ chapter, motion, manual, registerRenderer }: Props) {
   const stage = useRef<SVGSVGElement>(null)
@@ -30,8 +47,10 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
         // Couple, shaft, canopy, and gripping hand move as ONE rig. Contact cannot drift.
         timeline.fromTo('.umbrella-couple', { x: 24 }, { x: 0, duration: 0.9, ease: 'power2.out' }, 0)
       } else if (chapter === 2) {
-        timeline.fromTo('.constellation-line', { attr: { 'stroke-dashoffset': 1 } }, { attr: { 'stroke-dashoffset': 0 }, duration: 2.2, ease: 'none' }, 0.25)
-          .fromTo('.constellation-star', { opacity: 0.1 }, { opacity: 1, stagger: 0.12, duration: 0.2 }, 0.2)
+        // Stars stay in place; the line visits their exact coordinates in order.
+        timeline.fromTo('.constellation-line', { attr: { 'stroke-dashoffset': 1 }, opacity: 0 }, {
+          attr: { 'stroke-dashoffset': 0 }, opacity: 1, duration: 9, ease: 'none',
+        }, 1.8)
       } else if (chapter === 3) {
         timeline.fromTo('.embrace', { x: 8 }, { x: 0, duration: 0.7, ease: 'power2.out' }, 0)
           .fromTo('.hug-arms', { rotation: -4, svgOrigin: '300 260' }, { rotation: 0, duration: 0.55, ease: 'sine.out' }, 0.2)
@@ -43,8 +62,6 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       const womanGlance = gsap.quickSetter('.woman-expression', 'rotation', 'deg')
       const manGlance = gsap.quickSetter('.man-expression', 'rotation', 'deg')
       const breathing = gsap.utils.toArray<SVGElement>('.person-a, .person-b, .embrace, .seated-pair', stage.current).map((element) => gsap.quickSetter(element, 'y'))
-      const ambientStars = gsap.utils.toArray<SVGElement>('.ambient-star', stage.current)
-      const twinkles = ambientStars.map((element) => gsap.quickSetter(element, 'opacity'))
       const rain = gsap.utils.toArray<SVGElement>('.rain-streak', stage.current)
       const umbrellaSway = chapter === 1 ? gsap.quickSetter('.umbrella-couple', 'rotation', 'deg') : null
       if (umbrellaSway) gsap.set('.umbrella-couple', { svgOrigin: '310 410' })
@@ -60,7 +77,6 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
         womanGlance(Math.sin(time * .85) * .7)
         manGlance(Math.sin(time * .85 + .8) * -.6)
         breathing.forEach((set) => set(Math.sin(time * 1.5) * .55))
-        twinkles.forEach((set, index) => set(0.45 + 0.55 * (0.5 + 0.5 * Math.sin(time * 3.2 + index * 1.7))))
         rain.forEach((element, index) => element.setAttribute('transform', `translate(0 ${(time * 115 + index * 23) % 180 - 90})`))
         umbrellaSway?.(Math.sin(time * 1.5) * 0.65)
       }
@@ -83,14 +99,16 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       <linearGradient id={`${id}-shirt`}><stop stopColor="#ecc0a0"/><stop offset=".6" stopColor="#dda180"/><stop offset="1" stopColor="#bd8069"/></linearGradient>
       <radialGradient id={`${id}-glow`}><stop stopColor={night ? '#657096' : '#e7d4de'} stopOpacity=".4"/><stop offset="1" stopColor={night ? '#283650' : '#fff8ef'} stopOpacity="0"/></radialGradient>
       <linearGradient id={`${id}-ground`} x2="0" y2="1"><stop stopColor={night ? '#4d5870' : '#c5c6aa'} stopOpacity=".5"/><stop offset="1" stopColor={night ? '#283650' : '#fff8ef'} stopOpacity="0"/></linearGradient>
-      <radialGradient id={`${id}-moon-glow`}><stop stopColor="#f8e8bf" stopOpacity=".15"/><stop offset="1" stopColor="#f8e8bf" stopOpacity="0"/></radialGradient>
-      <mask id={`${id}-moon-mask`}><rect x="425" y="35" width="85" height="85" fill="white"/><circle cx="474" cy="62" r="23" fill="black"/></mask>
+      <radialGradient id={`${id}-star-glow`}><stop stopColor="#fff7dc" stopOpacity=".75"/><stop offset=".25" stopColor="#f5d598" stopOpacity=".3"/><stop offset="1" stopColor="#f5d598" stopOpacity="0"/></radialGradient>
     </defs>
     <ellipse cx="300" cy="230" rx="245" ry="220" fill={`url(#${id}-glow)`}/>
-    {night && <>
-      <g className="moon"><circle cx="461" cy="76" r="53" fill={`url(#${id}-moon-glow)`}/><circle cx="461" cy="76" r="23" fill="#f6e7c4" mask={`url(#${id}-moon-mask)`}/></g>
-      <g fill="#ead2a2">{stars.map(([x, y], index) => index % 4 === 0 ? <path className="ambient-star" key={index} d={`M${x} ${y - 3.5}Q${x + .6} ${y - .6} ${x + 3} ${y}Q${x + .6} ${y + .6} ${x} ${y + 3.5}Q${x - .6} ${y + .6} ${x - 3} ${y}Q${x - .6} ${y - .6} ${x} ${y - 3.5}Z`} opacity=".7"/> : <circle className="ambient-star" key={index} cx={x} cy={y} r={index % 3 === 0 ? 1.5 : .9} opacity=".7"/>)}</g>
-    </>}
+    {night && <g aria-hidden="true">
+      {surroundingStars.map(([x, y], index) => <g key={index}>
+        <circle cx={x} cy={y} r={4 + index % 4} fill={`url(#${id}-star-glow)`} opacity=".55" />
+        <circle cx={x} cy={y} r={[.8, 1.3, .65, 1.6, 1][index % 5]} fill="#fff1d6" opacity={.5 + index % 4 * .12} />
+        {index % 5 === 0 && <path d={`M${x - 2.5} ${y}h5M${x} ${y - 3}v6`} stroke="#fff1d6" strokeWidth=".65" strokeLinecap="round" opacity=".6" />}
+      </g>)}
+    </g>}
     <path className="scene-ground" d="M-10000 411H45Q155 375 300 402Q427 380 555 411H10000V448H-10000Z" fill={`url(#${id}-ground)`}/>
     <ellipse cx="300" cy="414" rx="125" ry="9" fill={night ? '#142238' : '#a7a58c'} opacity=".16"/>
     {chapter === 0 && <g className="garden" strokeLinecap="round">
@@ -103,9 +121,13 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       <path d="M138 423Q232 393 300 425T466 427" fill="none" stroke="#c8a66c" strokeWidth="1.3"/>
     </g>}
     {chapter === 1 && <g className="rain" stroke="#9ba8b9" strokeWidth="2" strokeLinecap="round" opacity=".65">{[[100,155],[145,220],[460,150],[495,230],[75,285],[465,320],[120,90],[490,70]].map(([x,y],index)=><path className="rain-streak" key={index} d={`M${x} ${y}l-5 18`}/>)}</g>}
-    {chapter >= 2 && <g className="constellation" transform="translate(0 -30)" fill="none" stroke="#e0bd80" strokeWidth="1.6">
-      <path className="constellation-line" pathLength="1" strokeDasharray="1" d="M300 170L248 130L229 94L246 67L277 70L300 95L324 70L355 67L373 94L353 130Z"/>
-      {[[300,170],[248,130],[229,94],[246,67],[277,70],[300,95],[324,70],[355,67],[373,94],[353,130]].map(([x,y],index)=><circle className="constellation-star" key={index} cx={x} cy={y} r="3" fill="#f3ddb4" stroke="none"/>)}
+    {chapter >= 2 && <g className="constellation" fill="none" stroke="#e0bd80" strokeWidth="1.6">
+      <path className="constellation-line" pathLength="1" strokeDasharray="1" d={heartOutline} stroke="#ead0a1" strokeOpacity=".85" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+      {heartStars.map(([x,y],index)=><g className="constellation-star" key={index} stroke="none">
+        <circle cx={x} cy={y} r={index % 2 ? 4 : 7} fill={`url(#${id}-star-glow)`}/>
+        {index % 2 === 0 && <path d={`M${x} ${y - 2.8}Q${x + .5} ${y - .5} ${x + 2.4} ${y}Q${x + .5} ${y + .5} ${x} ${y + 2.8}Q${x - .5} ${y + .5} ${x - 2.4} ${y}Q${x - .5} ${y - .5} ${x} ${y - 2.8}Z`} fill="#ffe9b9"/>}
+        <circle cx={x} cy={y} r={index % 2 ? .75 : 1} fill="#fffaf0"/>
+      </g>)}
     </g>}
     <g style={{ '--dress-fill': `url(#${id}-dress)`, '--shirt-fill': `url(#${id}-shirt)` } as React.CSSProperties}>
       {chapter <= 2 ? <StandingPair chapter={chapter}/> : chapter === 3 ? <EmbracingPair/> : <SeatedPair/>}

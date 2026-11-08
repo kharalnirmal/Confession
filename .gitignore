@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# User-supplied commercial recording: local preview only, not cleared for release.
+# Keep the original recording out of Git; the compressed deployment asset is in public/music/.
 /beabadoobee - Glue Song (Official Music Video).mp3
