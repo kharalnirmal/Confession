@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Social preview artwork — A Little Universe for Two</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #faf2eb; color: #50394a; font-family: Georgia, serif; }
+    .card { position: relative; width: 100%; height: 100%; padding: 66px 60px; background: radial-gradient(ellipse at 16% 20%, #fffdf8, transparent 65%); }
+    .eyebrow { margin: 0 0 32px; font: 12px Arial, sans-serif; letter-spacing: 4px; color: #987286; }
+    h1 { position: relative; z-index: 2; margin: 0; font-size: 61px; line-height: 1.08; letter-spacing: -2.5px; font-weight: 400; }
+    h1 em { color: #a06b83; font-weight: 400; }
+    .subtitle { margin: 25px 0 0; font-size: 19px; line-height: 1.6; color: #88717d; }
+    .preview { position: absolute; left: 530px; top: 104px; width: 618px; height: 386px; border: 7px solid #fffaf5; border-radius: 22px; box-shadow: 0 24px 65px #51394d26; overflow: hidden; transform: rotate(-3deg); }
+    .preview img { width: 100%; height: 100%; object-fit: cover; }
+    .heart { position: absolute; left: 475px; top: 65px; color: #bc8e9f; font-size: 48px; transform: rotate(14deg); }
+    .footer { position: absolute; bottom: 48px; left: 60px; right: 60px; display: flex; justify-content: space-between; border-top: 1px solid #d9c5ce; padding-top: 20px; color: #876a79; font: 14px Arial, sans-serif; letter-spacing: .8px; }
+    .signature { font: italic 19px Georgia, serif; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">AN INTERACTIVE LOVE LETTER</p>
+    <h1>A Little<br />Universe<br /><em>for Two.</em></h1>
+    <p class="subtitle">A small story.<br />An infinite kind of love.</p>
+    <span class="heart" aria-hidden="true">♡</span>
+    <div class="preview"><img src="images/constellation.png" alt="An illustrated couple beneath a heart traced between the stars" /></div>
+    <footer class="footer"><span>lovingpartner.vercel.app</span><span class="signature">made with love · nyxen</span></footer>
+  </main>
+</body>
+</html>
