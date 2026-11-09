@@ -4,11 +4,11 @@ const stars = (() => {
   let seed = 731
   const random = () => { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646 }
   const points: { x: number; y: number; size: number; brightness: number }[] = []
-  for (let attempt = 0; attempt < 500 && points.length < 52; attempt++) {
+  for (let attempt = 0; attempt < 1200 && points.length < 150; attempt++) {
     const x = 1 + random() * 98
-    const y = 8 + random() * 82
-    if (points.some((point) => Math.hypot((point.x - x) * 14.4, (point.y - y) * 3) < 50)) continue
-    points.push({ x, y, size: 3 + random() ** 2 * 6, brightness: .45 + random() * .45 })
+    const y = 4 + random() * 92
+    if (points.some((point) => Math.hypot((point.x - x) * 10, (point.y - y) * 5) < 23)) continue
+    points.push({ x, y, size: .8 + random() ** 3 * 1.6, brightness: .25 + random() * .55 })
   }
   return points
 })()
@@ -24,15 +24,12 @@ export function NightSky() {
       <circle cx="50" cy="50" r="49" fill={`url(#${id}-glow)`} />
       <circle cx="50" cy="50" r="26" fill="#f6e7c4" mask={`url(#${id}-crescent)`} />
     </svg>
-    {stars.map(({ x, y, size, brightness }, index) => <span key={index} className="sky-star" style={{
+    <div className="sky-stars">
+    {stars.map(({ x, y, size, brightness }, index) => <span key={index} className={`sky-star${index % 9 === 0 ? ' sky-star-shimmer' : ''}`} style={{
       left: `${x}%`, top: `${y}%`, width: size, height: size,
       '--star-opacity': brightness,
-      animationDuration: `${5 + index % 7}s`, animationDelay: `${-index * 1.37}s`,
-    } as CSSProperties}>
-      <svg viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="2.2" fill="#fff5de" />
-        {index % 3 === 0 && <path d="M10 1C10.8 8.4 11.6 9.2 19 10C11.6 10.8 10.8 11.6 10 19C9.2 11.6 8.4 10.8 1 10C8.4 9.2 9.2 8.4 10 1Z" fill="#f9e7c9" opacity=".8" />}
-      </svg>
-    </span>)}
+      animationDuration: `${8 + index % 7}s`, animationDelay: `${-index * 1.37}s`,
+    } as CSSProperties}/>)}
+    </div>
   </div>
 }

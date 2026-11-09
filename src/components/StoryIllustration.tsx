@@ -4,6 +4,7 @@ import { EmbracingPair, SeatedPair, StandingPair } from './Characters'
 import { BotanicalLeaf } from './BotanicalLeaf'
 import { SakuraTree, SakuraPetals } from './SakuraTree'
 import { sakuraPetalPose } from '../lib/sakura'
+import { characterMotion, flowerGesture } from '../lib/characterMotion'
 import type { ResolvedStory } from '../types/story'
 import { sceneIds } from '../types/story'
 
@@ -15,23 +16,9 @@ interface Props {
 }
 
 const heartVertices = [[300, 188], [253, 155], [211, 117], [193, 80], [205, 45], [237, 30], [272, 39], [300, 67], [328, 39], [363, 30], [395, 45], [407, 80], [389, 117], [347, 155]]
-  .map(([x, y]) => [300 + (x - 300) * .68, y * .68 - 8])
-const heartStars = heartVertices.flatMap((point, index) => {
-  const next = heartVertices[(index + 1) % heartVertices.length]
-  return [point, [(point[0] + next[0]) / 2, (point[1] + next[1]) / 2]]
-})
+  .map(([x, y]) => [300 + (x - 300) * .68, y * .68 - 18])
+const heartStars = heartVertices
 const heartOutline = `${heartStars.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join('')}Z`
-const surroundingStars = (() => {
-  let seed = 947
-  const random = () => { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646 }
-  const points: number[][] = []
-  for (let attempt = 0; attempt < 300 && points.length < 27; attempt++) {
-    const point = [65 + random() * 470, 8 + random() * 126]
-    if ([...heartStars, ...points].some(([x, y]) => Math.hypot(x - point[0], y - point[1]) < 17)) continue
-    points.push(point)
-  }
-  return points
-})()
 
 export function StoryIllustration({ chapter, motion, manual, registerRenderer }: Props) {
   const stage = useRef<SVGSVGElement>(null)
@@ -40,41 +27,44 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
     let disconnect: (() => void) | undefined
     const context = gsap.context(() => {
       const timeline = gsap.timeline({ paused: true })
-      if (chapter === 0) {
-        timeline.fromTo('.person-a', { x: -26 }, { x: 0, duration: 1.1, ease: 'sine.inOut' }, 0)
-          .fromTo('.person-b', { x: 26 }, { x: 0, duration: 1.1, ease: 'sine.inOut' }, 0.1)
-          .fromTo('.giving-arm', { rotation: -22, svgOrigin: '326 232' }, { rotation: 0, duration: .8, ease: 'sine.inOut' }, .8)
-          .fromTo('.receiving-arm', { rotation: 10, svgOrigin: '278 245' }, { rotation: 0, duration: .7, ease: 'sine.inOut' }, 1.1)
-      } else if (chapter === 1) {
+      if (chapter === 1) {
         // Couple, shaft, canopy, and gripping hand move as ONE rig. Contact cannot drift.
-        timeline.fromTo('.umbrella-couple', { x: 24 }, { x: 0, duration: 0.9, ease: 'power2.out' }, 0)
+        timeline.fromTo('.umbrella-couple', { opacity: .7 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
       } else if (chapter === 2) {
         // Stars stay in place; the line visits their exact coordinates in order.
         timeline.fromTo('.constellation-line', { attr: { 'stroke-dashoffset': 1 }, opacity: 0 }, {
           attr: { 'stroke-dashoffset': 0 }, opacity: 1, duration: 9, ease: 'none',
         }, 1.8)
       } else if (chapter === 3) {
-        timeline.fromTo('.embrace', { x: 8 }, { x: 0, duration: 0.7, ease: 'power2.out' }, 0)
-          .fromTo('.hug-arms', { rotation: -4, svgOrigin: '300 260' }, { rotation: 0, duration: 0.55, ease: 'sine.out' }, 0.2)
-      } else timeline.fromTo('.seated-pair', { opacity: 0.4 }, { opacity: 1, duration: 0.65 }, 0)
+        timeline.fromTo('.embrace', { opacity: .7 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
+      } else if (chapter === 4) timeline.fromTo('.seated-figures', { opacity: .7 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
 
       const eyeGroups = gsap.utils.toArray<SVGElement>('.woman-eyes, .man-eyes', stage.current)
-      const eyes = eyeGroups.map((element) => {
-        gsap.set(element, { transformOrigin: 'center' })
-        return { set: gsap.quickSetter(element, 'scaleY'), scale: 1 }
-      })
-      gsap.set('.woman-expression, .man-expression', { transformOrigin: '50% 75%' })
-      const womanGlance = gsap.quickSetter('.woman-expression', 'rotation', 'deg')
-      const manGlance = gsap.quickSetter('.man-expression', 'rotation', 'deg')
-      const breathing = gsap.utils.toArray<SVGElement>('.person-a, .person-b, .embrace, .seated-pair', stage.current).map((element) => gsap.quickSetter(element, 'y'))
+      const eyes = eyeGroups.map((element) => ({ element, scale: 1 }))
+      const womanHead = stage.current?.querySelector('.woman-expression')
+      const manHead = stage.current?.querySelector('.man-expression')
+      const breathing = gsap.utils.toArray<SVGElement>('.couple-standing, .embrace, .seated-figures', stage.current)
+      const givingArm = stage.current?.querySelector('.giving-arm')
+      const receivingArm = stage.current?.querySelector('.receiving-arm')
+      const offeredFlower = stage.current?.querySelector('.offered-flower')
+      const receivedFlower = stage.current?.querySelector('.received-flower')
+      const renderFlower = (time: number) => {
+        const gesture = flowerGesture(time)
+        // Native local pivots keep shoulders fixed under the overlaid torso.
+        givingArm?.setAttribute('transform', `rotate(${gesture.givingAngle} 334 232)`)
+        receivingArm?.setAttribute('transform', `rotate(${gesture.receivingAngle} 273 245)`)
+        // Switch ownership only when both hands have reached the identical flower pose.
+        offeredFlower?.setAttribute('opacity', gesture.received ? '0' : '1')
+        receivedFlower?.setAttribute('opacity', gesture.received ? '1' : '0')
+      }
       const rain = gsap.utils.toArray<SVGElement>('.rain-streak', stage.current)
       const petals = gsap.utils.toArray<SVGElement>('.sakura-petal', stage.current)
-      const umbrellaSway = chapter === 1 ? gsap.quickSetter('.umbrella-couple', 'rotation', 'deg') : null
-      if (umbrellaSway) gsap.set('.umbrella-couple', { svgOrigin: '310 410' })
       let lastTimelineTime = -1
       const render = (state: ResolvedStory) => {
         if (state.sceneId !== sceneIds[chapter]) return
-        const time = state.localTime * 1.3
+        const time = state.localTime
+        const pose = characterMotion(time)
+        if (chapter === 0) renderFlower(time)
         // Real seconds, not chapter-wide progress: gestures finish in ~0.5–2 seconds.
         const timelineTime = Math.min(time, timeline.duration())
         if (timelineTime !== lastTimelineTime) {
@@ -82,21 +72,30 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
           lastTimelineTime = timelineTime
         }
         eyes.forEach((eye, index) => {
-          const phase = (time + index * 1.9) % 4.2
-          const scale = phase < 0.14 ? Math.max(0.08, Math.abs(phase - 0.07) / 0.07) : 1
-          if (scale !== eye.scale) { eye.set(scale); eye.scale = scale }
+          const scale = chapter === 3 ? 1 : index === 0 ? pose.womanBlink : pose.manBlink
+          if (scale !== eye.scale) {
+            eye.element.setAttribute('transform', `translate(0 35) scale(1 ${scale}) translate(0 -35)`)
+            eye.scale = scale
+          }
         })
-        womanGlance(Math.sin(time * .85) * .7)
-        manGlance(Math.sin(time * .85 + .8) * -.6)
-        breathing.forEach((set) => set(Math.sin(time * 1.5) * .55))
+        womanHead?.setAttribute('transform', `rotate(${pose.womanGlance} 0 55)`)
+        manHead?.setAttribute('transform', `rotate(${pose.manGlance} 0 55)`)
+        breathing.forEach((element) => element.setAttribute('transform', `translate(300 415) scale(1 ${pose.breathScale}) translate(-300 -415)`))
         rain.forEach((element, index) => element.setAttribute('transform', `translate(0 ${(time * 115 + index * 23) % 180 - 90})`))
-        umbrellaSway?.(Math.sin(time * 1.5) * 0.65)
         petals.forEach((element, index) => {
           const pose = sakuraPetalPose(index, state.localTime)
           element.setAttribute('transform', `translate(${pose.x} ${pose.y}) rotate(${pose.rotation}) scale(${pose.scaleX} ${pose.scaleY})`)
           element.setAttribute('opacity', String(pose.opacity))
         })
       }
+      // Reset the local rig on effect reruns as well as on fresh mounts.
+      eyes.forEach(({ element }) => element.removeAttribute('transform'))
+      womanHead?.removeAttribute('transform')
+      manHead?.removeAttribute('transform')
+      breathing.forEach((element) => element.removeAttribute('transform'))
+      // Clear previous gesture transforms on hot refresh; keep the original resting pose.
+      stage.current?.querySelectorAll('.person-b, .giving-arm, .receiving-arm, .man-leg-back, .man-leg-front').forEach((element) => element.removeAttribute('transform'))
+      if (chapter === 0) renderFlower(manual || !motion ? 4 : 0)
       if (manual || !motion) timeline.progress(1, true)
       else disconnect = registerRenderer(render)
     }, stage)
@@ -105,11 +104,11 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
 
   const night = chapter >= 2
   return <svg ref={stage} className="story-illustration" viewBox="40 0 520 450" role="img" aria-label={[
-    'Beneath a detailed pink sakura tree, a man offers a flower to a woman as cherry blossom petals drift over the couple.',
+    'Beneath a pink sakura tree, a man holds out a flower to a woman as cherry blossom petals drift around them.',
     'The man grips an umbrella shaft with his left hand, sheltering himself and the woman beside him.',
-    'The woman and man hold hands under a bright heart-shaped constellation.',
-    'The woman and man lean into a close embrace, arms wrapped around each other.',
-    'The couple sit close together on a garden bench, feet on the ground and hands resting together in their laps.',
+    'The woman and man hold hands in the warm light of a garden lamp beneath a heart-shaped constellation.',
+    'Beside the same glowing garden lamp, the woman and man lean into a close embrace, arms wrapped around each other.',
+    'The couple sit close together on a garden bench in warm lamplight, feet on the ground and hands resting together in their laps.',
   ][chapter]}>
     <defs>
       <linearGradient id={`${id}-dress`}><stop stopColor="#bba3c3"/><stop offset=".55" stopColor="#a88eae"/><stop offset="1" stopColor="#887098"/></linearGradient>
@@ -117,25 +116,39 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       <radialGradient id={`${id}-glow`}><stop stopColor={night ? '#657096' : '#e7d4de'} stopOpacity=".4"/><stop offset="1" stopColor={night ? '#283650' : '#fff8ef'} stopOpacity="0"/></radialGradient>
       <linearGradient id={`${id}-ground`} x2="0" y2="1"><stop stopColor={night ? '#4d5870' : '#c5c6aa'} stopOpacity=".5"/><stop offset="1" stopColor={night ? '#283650' : '#fff8ef'} stopOpacity="0"/></linearGradient>
       <radialGradient id={`${id}-star-glow`}><stop stopColor="#fff7dc" stopOpacity=".75"/><stop offset=".25" stopColor="#f5d598" stopOpacity=".3"/><stop offset="1" stopColor="#f5d598" stopOpacity="0"/></radialGradient>
+      <radialGradient id={`${id}-lamp-halo`}><stop stopColor="#ffe4aa" stopOpacity=".45"/><stop offset=".28" stopColor="#f5ca83" stopOpacity=".16"/><stop offset="1" stopColor="#f5ca83" stopOpacity="0"/></radialGradient>
+      <radialGradient id={`${id}-shared-light`}><stop stopColor="#f4cf95" stopOpacity=".2"/><stop offset=".6" stopColor="#efc18a" stopOpacity=".09"/><stop offset="1" stopColor="#efc18a" stopOpacity="0"/></radialGradient>
+      <linearGradient id={`${id}-lantern-glass`} x2="0" y2="1"><stop stopColor="#ffeac0"/><stop offset=".55" stopColor="#ffdb91"/><stop offset="1" stopColor="#dca464"/></linearGradient>
     </defs>
     <ellipse cx="300" cy="230" rx="245" ry="220" fill={`url(#${id}-glow)`}/>
-    {night && <g aria-hidden="true">
-      {surroundingStars.map(([x, y], index) => <g key={index}>
-        <circle cx={x} cy={y} r={4 + index % 4} fill={`url(#${id}-star-glow)`} opacity=".55" />
-        <circle cx={x} cy={y} r={[.8, 1.3, .65, 1.6, 1][index % 5]} fill="#fff1d6" opacity={.5 + index % 4 * .12} />
-        {index % 5 === 0 && <path d={`M${x - 2.5} ${y}h5M${x} ${y - 3}v6`} stroke="#fff1d6" strokeWidth=".65" strokeLinecap="round" opacity=".6" />}
-      </g>)}
-    </g>}
     <path className="scene-ground" d="M-10000 411H45Q155 375 300 402Q427 380 555 411H10000V448H-10000Z" fill={`url(#${id}-ground)`}/>
     <ellipse cx="300" cy="414" rx="125" ry="9" fill={night ? '#142238' : '#a7a58c'} opacity=".16"/>
+    {night && <g className="garden-lamp" aria-hidden="true">
+      {/* The light is steady and shared by both characters, including in reduced motion. */}
+      <ellipse cx="353" cy="292" rx="171" ry="155" fill={`url(#${id}-shared-light)`}/>
+      <ellipse cx="336" cy="411" rx="151" ry="22" fill={`url(#${id}-lamp-halo)`}/>
+      <circle cx="417" cy="149" r="87" fill={`url(#${id}-lamp-halo)`}/>
+      <ellipse cx="442" cy="416" rx="25" ry="4" fill="#142238" opacity=".3"/>
+      <path d="M441 175V406" stroke="#1d2938" strokeWidth="7" strokeLinecap="round"/>
+      <path d="M439 178V402" stroke="#9f8b72" strokeWidth="1.3" opacity=".7"/>
+      <path d="M430 413L433 404H449L452 413Z" fill="#24303e" stroke="#7e786b" strokeWidth="1"/>
+      <g transform="translate(0 -38)">
+      <path d="M441 215V170Q441 151 425 151H417" fill="none" stroke="#263241" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M440 168Q438 154 426 153" fill="none" stroke="#a18b6e" strokeWidth="1.2"/>
+      <path d="M417 151V163" stroke="#a18b6e" strokeWidth="2"/>
+      <path d="M403 175H431L428 203Q417 209 406 203Z" fill={`url(#${id}-lantern-glass)`}/>
+      <path d="M400 175L409 165H425L434 175ZM405 204H429L425 210H409Z" fill="#303643" stroke="#b69a72" strokeWidth="1" strokeLinejoin="round"/>
+      <path d="M403 175L406 203M431 175L428 203M417 176V206" stroke="#80694f" strokeWidth="1.6" fill="none"/>
+      <path d="M409 180L410 198" stroke="#fff7dc" strokeWidth="2" strokeLinecap="round" opacity=".8"/>
+      </g>
+    </g>}
     {chapter === 0 && <SakuraTree/>}
     {chapter === 1 && <g className="rain" stroke="#9ba8b9" strokeWidth="2" strokeLinecap="round" opacity=".65">{[[100,155],[145,220],[460,150],[495,230],[75,285],[465,320],[120,90],[490,70]].map(([x,y],index)=><path className="rain-streak" key={index} d={`M${x} ${y}l-5 18`}/>)}</g>}
     {chapter >= 2 && <g className="constellation" fill="none" stroke="#e0bd80" strokeWidth="1.6">
-      <path className="constellation-line" pathLength="1" strokeDasharray="1" d={heartOutline} stroke="#ead0a1" strokeOpacity=".85" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+      <path className="constellation-line" pathLength="1" strokeDasharray="1" d={heartOutline} stroke="#ead0a1" strokeOpacity=".45" strokeWidth=".9" strokeLinejoin="round" strokeLinecap="round"/>
       {heartStars.map(([x,y],index)=><g className="constellation-star" key={index} stroke="none">
-        <circle cx={x} cy={y} r={index % 2 ? 4 : 7} fill={`url(#${id}-star-glow)`}/>
-        {index % 2 === 0 && <path d={`M${x} ${y - 2.8}Q${x + .5} ${y - .5} ${x + 2.4} ${y}Q${x + .5} ${y + .5} ${x} ${y + 2.8}Q${x - .5} ${y + .5} ${x - 2.4} ${y}Q${x - .5} ${y - .5} ${x} ${y - 2.8}Z`} fill="#ffe9b9"/>}
-        <circle cx={x} cy={y} r={index % 2 ? .75 : 1} fill="#fffaf0"/>
+        <circle cx={x} cy={y} r={index % 3 ? 2.5 : 4} fill={`url(#${id}-star-glow)`} opacity=".55"/>
+        <circle cx={x} cy={y} r={index % 3 ? .7 : 1.1} fill="#fff5df" opacity={index % 3 ? .75 : .95}/>
       </g>)}
     </g>}
     <g style={{ '--dress-fill': `url(#${id}-dress)`, '--shirt-fill': `url(#${id}-shirt)` } as React.CSSProperties}>
