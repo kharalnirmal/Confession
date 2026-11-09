@@ -13,13 +13,19 @@ export function useStoryPlayback(active: boolean) {
   const [paused, setPaused] = useState(false)
   const [run, setRun] = useState(0)
   const [position, setPosition] = useState({ chapter: 0, line: 0, completed: false, closing: false })
+  const lastPosition = useRef(position)
   const sample = useCallback(() => {
     const chapter = Math.max(0, boundaries.findLastIndex((start) => clock.current >= start))
     const localTime = clock.current - boundaries[chapter]
     const line = Math.min(chapters[chapter].lines.length - 1, Math.floor(localTime / secondsPerLine))
     const completed = clock.current >= duration
     const closing = clock.current >= duration - .75
-    setPosition((previous) => previous.chapter === chapter && previous.line === line && previous.completed === completed && previous.closing === closing ? previous : { chapter, line, completed, closing })
+    const previous = lastPosition.current
+    if (previous.chapter !== chapter || previous.line !== line || previous.completed !== completed || previous.closing !== closing) {
+      const next = { chapter, line, completed, closing }
+      lastPosition.current = next
+      setPosition(next)
+    }
     renderer.current?.({ sceneId: sceneIds[chapter], chapterIndex: chapter, cue: null, localTime, completed })
   }, [])
   useEffect(() => {

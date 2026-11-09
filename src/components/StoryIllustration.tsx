@@ -2,6 +2,8 @@ import { useId, useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { EmbracingPair, SeatedPair, StandingPair } from './Characters'
 import { BotanicalLeaf } from './BotanicalLeaf'
+import { SakuraTree, SakuraPetals } from './SakuraTree'
+import { sakuraPetalPose } from '../lib/sakura'
 import type { ResolvedStory } from '../types/story'
 import { sceneIds } from '../types/story'
 
@@ -57,28 +59,43 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       } else timeline.fromTo('.seated-pair', { opacity: 0.4 }, { opacity: 1, duration: 0.65 }, 0)
 
       const eyeGroups = gsap.utils.toArray<SVGElement>('.woman-eyes, .man-eyes', stage.current)
-      const eyes = eyeGroups.map((element) => { gsap.set(element, { transformOrigin: 'center' }); return gsap.quickSetter(element, 'scaleY') })
+      const eyes = eyeGroups.map((element) => {
+        gsap.set(element, { transformOrigin: 'center' })
+        return { set: gsap.quickSetter(element, 'scaleY'), scale: 1 }
+      })
       gsap.set('.woman-expression, .man-expression', { transformOrigin: '50% 75%' })
       const womanGlance = gsap.quickSetter('.woman-expression', 'rotation', 'deg')
       const manGlance = gsap.quickSetter('.man-expression', 'rotation', 'deg')
       const breathing = gsap.utils.toArray<SVGElement>('.person-a, .person-b, .embrace, .seated-pair', stage.current).map((element) => gsap.quickSetter(element, 'y'))
       const rain = gsap.utils.toArray<SVGElement>('.rain-streak', stage.current)
+      const petals = gsap.utils.toArray<SVGElement>('.sakura-petal', stage.current)
       const umbrellaSway = chapter === 1 ? gsap.quickSetter('.umbrella-couple', 'rotation', 'deg') : null
       if (umbrellaSway) gsap.set('.umbrella-couple', { svgOrigin: '310 410' })
+      let lastTimelineTime = -1
       const render = (state: ResolvedStory) => {
         if (state.sceneId !== sceneIds[chapter]) return
         const time = state.localTime * 1.3
         // Real seconds, not chapter-wide progress: gestures finish in ~0.5–2 seconds.
-        timeline.time(Math.min(time, timeline.duration()), true)
-        eyes.forEach((set, index) => {
+        const timelineTime = Math.min(time, timeline.duration())
+        if (timelineTime !== lastTimelineTime) {
+          timeline.time(timelineTime, true)
+          lastTimelineTime = timelineTime
+        }
+        eyes.forEach((eye, index) => {
           const phase = (time + index * 1.9) % 4.2
-          set(phase < 0.14 ? Math.max(0.08, Math.abs(phase - 0.07) / 0.07) : 1)
+          const scale = phase < 0.14 ? Math.max(0.08, Math.abs(phase - 0.07) / 0.07) : 1
+          if (scale !== eye.scale) { eye.set(scale); eye.scale = scale }
         })
         womanGlance(Math.sin(time * .85) * .7)
         manGlance(Math.sin(time * .85 + .8) * -.6)
         breathing.forEach((set) => set(Math.sin(time * 1.5) * .55))
         rain.forEach((element, index) => element.setAttribute('transform', `translate(0 ${(time * 115 + index * 23) % 180 - 90})`))
         umbrellaSway?.(Math.sin(time * 1.5) * 0.65)
+        petals.forEach((element, index) => {
+          const pose = sakuraPetalPose(index, state.localTime)
+          element.setAttribute('transform', `translate(${pose.x} ${pose.y}) rotate(${pose.rotation}) scale(${pose.scaleX} ${pose.scaleY})`)
+          element.setAttribute('opacity', String(pose.opacity))
+        })
       }
       if (manual || !motion) timeline.progress(1, true)
       else disconnect = registerRenderer(render)
@@ -88,7 +105,7 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
 
   const night = chapter >= 2
   return <svg ref={stage} className="story-illustration" viewBox="40 0 520 450" role="img" aria-label={[
-    'A man in a peach shirt gently offers a pink flower to a woman in a lavender dress.',
+    'Beneath a detailed pink sakura tree, a man offers a flower to a woman as cherry blossom petals drift over the couple.',
     'The man grips an umbrella shaft with his left hand, sheltering himself and the woman beside him.',
     'The woman and man hold hands under a bright heart-shaped constellation.',
     'The woman and man lean into a close embrace, arms wrapped around each other.',
@@ -111,15 +128,7 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
     </g>}
     <path className="scene-ground" d="M-10000 411H45Q155 375 300 402Q427 380 555 411H10000V448H-10000Z" fill={`url(#${id}-ground)`}/>
     <ellipse cx="300" cy="414" rx="125" ry="9" fill={night ? '#142238' : '#a7a58c'} opacity=".16"/>
-    {chapter === 0 && <g className="garden" strokeLinecap="round">
-      <path d="M102 411Q116 306 106 204L120 190Q119 307 126 411Z" fill="#9c8771"/>
-      <path d="M114 286Q84 243 69 207M114 246Q148 207 162 174M111 225Q94 174 113 137" stroke="#9c8771" strokeWidth="8" fill="none"/>
-      <path d="M52 231C17 213 20 172 43 157C25 126 47 92 79 96C87 61 129 57 149 85C179 71 208 101 194 128C226 153 209 189 182 192C182 226 144 244 122 227C101 251 72 249 52 231Z" fill="#a3b08d"/>
-      <path d="M48 170C36 142 63 115 89 124C95 92 137 85 151 116C181 107 199 136 185 157C208 183 177 211 152 195C136 226 101 219 91 202C68 215 42 197 48 170Z" fill="#b5bf9b"/>
-      <g fill="#c8cfab" opacity=".8"><ellipse cx="77" cy="145" rx="18" ry="9" transform="rotate(-30 77 145)"/><ellipse cx="132" cy="116" rx="18" ry="10" transform="rotate(25 132 116)"/><ellipse cx="165" cy="173" rx="17" ry="9" transform="rotate(-25 165 173)"/></g>
-      <path d="M114 408L112 245M112 270L94 250" stroke="#c1ab8d" strokeWidth="2" fill="none"/>
-      <path d="M138 423Q232 393 300 425T466 427" fill="none" stroke="#c8a66c" strokeWidth="1.3"/>
-    </g>}
+    {chapter === 0 && <SakuraTree/>}
     {chapter === 1 && <g className="rain" stroke="#9ba8b9" strokeWidth="2" strokeLinecap="round" opacity=".65">{[[100,155],[145,220],[460,150],[495,230],[75,285],[465,320],[120,90],[490,70]].map(([x,y],index)=><path className="rain-streak" key={index} d={`M${x} ${y}l-5 18`}/>)}</g>}
     {chapter >= 2 && <g className="constellation" fill="none" stroke="#e0bd80" strokeWidth="1.6">
       <path className="constellation-line" pathLength="1" strokeDasharray="1" d={heartOutline} stroke="#ead0a1" strokeOpacity=".85" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
@@ -132,6 +141,7 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
     <g style={{ '--dress-fill': `url(#${id}-dress)`, '--shirt-fill': `url(#${id}-shirt)` } as React.CSSProperties}>
       {chapter <= 2 ? <StandingPair chapter={chapter}/> : chapter === 3 ? <EmbracingPair/> : <SeatedPair/>}
     </g>
+    {chapter === 0 && <SakuraPetals/>}
     <g color={night ? '#849077' : '#899775'} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none">
       {[{ x: 134, y: 415, side: 'left' }, { x: 461, y: 417, side: 'right' }].map(({ x, y, side }) => <g key={side} transform={`translate(${x} ${y})`}>
         <g className={`ground-sprig ground-sprig-${side}`}>
