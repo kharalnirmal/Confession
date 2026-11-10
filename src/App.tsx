@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { MessageOpening, SpecialReveal } from './components/MessageOpening'
 import { FloralFrame } from './components/FloralFrame'
 import { NightSky } from './components/NightSky'
+import { SkyConstellation } from './components/SkyConstellation'
+import { ButterflyAccent } from './components/ButterflyAccent'
 import { EndingSequence } from './components/EndingSequence'
 import { StoryIllustration } from './components/StoryIllustration'
 import { chapters } from './content/story'
@@ -81,7 +83,11 @@ function App() {
     <main id="story" className={page === 'story' && !finished ? 'story-main cinematic' : 'story-main'}>
       {page === 'welcome' && <section className="welcome-panel" aria-labelledby="welcome-title">
         <span className="welcome-heart" aria-hidden="true">♡</span>
-        <h1 id="welcome-title" ref={title} tabIndex={-1}>A little moment.<br /><em>Just for you.</em></h1>
+        <div className="welcome-heading">
+          <ButterflyAccent side="left" />
+          <h1 id="welcome-title" ref={title} tabIndex={-1}>A little moment.<br /><em>Just for you.</em></h1>
+          <ButterflyAccent side="right" />
+        </div>
         <p className="music-question">With music, or without?</p>
         <div className="music-choices">
           <button className="primary-button" onClick={() => chooseMusic(true)} disabled={!track}><span aria-hidden="true">♫</span> With music</button>
@@ -93,6 +99,7 @@ function App() {
       {page === 'reveal' && <SpecialReveal onOpen={startStory} />}
       {page === 'story' && !finished && <section className="chapter-panel" data-closing={story.closing} aria-label={chapters[story.chapter].title}>
         <div className="illustration-space" key={story.chapter}>
+          {story.chapter >= 2 && <SkyConstellation chapter={story.chapter} motion={motion} registerRenderer={story.registerRenderer} />}
           {story.chapter > 0 && motion && <div className="scene-previous" aria-hidden="true"><StoryIllustration chapter={story.chapter - 1} motion={false} manual registerRenderer={story.registerRenderer} /></div>}
           <div className="scene-current"><StoryIllustration chapter={story.chapter} motion={motion} manual={false} registerRenderer={story.registerRenderer} /></div>
         </div>
