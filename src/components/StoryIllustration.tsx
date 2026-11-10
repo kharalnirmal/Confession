@@ -5,7 +5,8 @@ import { BotanicalLeaf } from './BotanicalLeaf'
 import { SakuraTree, SakuraPetals } from './SakuraTree'
 import { sakuraPetalPose } from '../lib/sakura'
 import { characterMotion, flowerGesture } from '../lib/characterMotion'
-import { raindrops, rainPose, ripplePose } from '../lib/rain'
+import { rainPose, ripplePose, splashPose, umbrellaDripPose } from '../lib/rain'
+import { RainGarden } from './RainGarden'
 import type { ResolvedStory } from '../types/story'
 import { sceneIds } from '../types/story'
 
@@ -15,11 +16,6 @@ interface Props {
   manual: boolean
   registerRenderer: (renderer: (state: ResolvedStory) => void) => () => void
 }
-
-const heartVertices = [[300, 188], [253, 155], [211, 117], [193, 80], [205, 45], [237, 30], [272, 39], [300, 67], [328, 39], [363, 30], [395, 45], [407, 80], [389, 117], [347, 155]]
-  .map(([x, y]) => [300 + (x - 300) * .68, y * .68 - 18])
-const heartStars = heartVertices
-const heartOutline = `${heartStars.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join('')}Z`
 
 export function StoryIllustration({ chapter, motion, manual, registerRenderer }: Props) {
   const stage = useRef<SVGSVGElement>(null)
@@ -31,11 +27,6 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       if (chapter === 1) {
         // Couple, shaft, canopy, and gripping hand move as ONE rig. Contact cannot drift.
         timeline.fromTo('.umbrella-couple', { opacity: .7 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
-      } else if (chapter === 2) {
-        // Stars stay in place; the line visits their exact coordinates in order.
-        timeline.fromTo('.constellation-line', { attr: { 'stroke-dashoffset': 1 }, opacity: 0 }, {
-          attr: { 'stroke-dashoffset': 0 }, opacity: 1, duration: 9, ease: 'none',
-        }, 1.8)
       } else if (chapter === 3) {
         timeline.fromTo('.embrace', { opacity: .7 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
       } else if (chapter === 4) timeline.fromTo('.seated-figures', { opacity: .7 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
@@ -60,6 +51,8 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       }
       const rain = gsap.utils.toArray<SVGElement>('.rain-streak', stage.current)
       const ripples = gsap.utils.toArray<SVGEllipseElement>('.rain-ripple', stage.current)
+      const splashes = gsap.utils.toArray<SVGElement>('.rain-splash', stage.current)
+      const drips = gsap.utils.toArray<SVGElement>('.umbrella-drip', stage.current)
       const petals = gsap.utils.toArray<SVGElement>('.sakura-petal', stage.current)
       let lastTimelineTime = -1
       const render = (state: ResolvedStory) => {
@@ -88,10 +81,21 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
           element.setAttribute('transform', `translate(${drop.x} ${drop.y})`)
         })
         ripples.forEach((element, index) => {
-          const ripple = ripplePose(index, time)
+          const ripple = ripplePose(Math.floor(index / 2), time, index % 2)
           element.setAttribute('rx', String(ripple.radius))
           element.setAttribute('ry', String(ripple.radius * .23))
           element.setAttribute('opacity', String(ripple.opacity))
+        })
+        splashes.forEach((element, index) => {
+          const splash = splashPose(index, time)
+          element.setAttribute('transform', `translate(0 ${-splash.height}) scale(${splash.spread} 1)`)
+          element.setAttribute('opacity', String(splash.opacity))
+        })
+        drips.forEach((element, index) => {
+          const drip = umbrellaDripPose(index, time)
+          element.setAttribute('transform', `translate(${drip.x} ${drip.y})`)
+          element.setAttribute('d', `M0 0v${drip.length}`)
+          element.setAttribute('opacity', String(drip.opacity))
         })
         petals.forEach((element, index) => {
           const pose = sakuraPetalPose(index, state.localTime)
@@ -116,7 +120,7 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
   const night = chapter >= 2
   return <svg ref={stage} className="story-illustration" viewBox="40 0 520 450" role="img" aria-label={[
     'Beneath a pink sakura tree, a man holds out a flower to a woman as cherry blossom petals drift around them.',
-    'The man grips an umbrella shaft with his left hand, sheltering himself and the woman beside him.',
+    'The couple shelter beneath an umbrella as rain drips from its edges into reflective puddles with soft ripples and tiny splashes.',
     'The woman and man hold hands in the warm light of a garden lamp beneath a heart-shaped constellation.',
     'Beside the same glowing garden lamp, the woman and man lean into a close embrace, arms wrapped around each other.',
     'The couple sit close together on a garden bench in warm lamplight, feet on the ground and hands resting together in their laps.',
@@ -126,12 +130,11 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       <linearGradient id={`${id}-shirt`}><stop stopColor="#ecc0a0"/><stop offset=".6" stopColor="#dda180"/><stop offset="1" stopColor="#bd8069"/></linearGradient>
       <radialGradient id={`${id}-glow`}><stop stopColor={night ? '#657096' : '#e7d4de'} stopOpacity=".4"/><stop offset="1" stopColor={night ? '#283650' : '#fff8ef'} stopOpacity="0"/></radialGradient>
       <linearGradient id={`${id}-ground`} x2="0" y2="1"><stop stopColor={night ? '#4d5870' : '#c5c6aa'} stopOpacity=".5"/><stop offset="1" stopColor={night ? '#283650' : '#fff8ef'} stopOpacity="0"/></linearGradient>
-      <radialGradient id={`${id}-star-glow`}><stop stopColor="#fff7dc" stopOpacity=".75"/><stop offset=".25" stopColor="#f5d598" stopOpacity=".3"/><stop offset="1" stopColor="#f5d598" stopOpacity="0"/></radialGradient>
       <radialGradient id={`${id}-lamp-halo`}><stop stopColor="#ffe4aa" stopOpacity=".45"/><stop offset=".28" stopColor="#f5ca83" stopOpacity=".16"/><stop offset="1" stopColor="#f5ca83" stopOpacity="0"/></radialGradient>
       <radialGradient id={`${id}-shared-light`}><stop stopColor="#f4cf95" stopOpacity=".2"/><stop offset=".6" stopColor="#efc18a" stopOpacity=".09"/><stop offset="1" stopColor="#efc18a" stopOpacity="0"/></radialGradient>
       <linearGradient id={`${id}-lantern-glass`} x2="0" y2="1"><stop stopColor="#ffeac0"/><stop offset=".55" stopColor="#ffdb91"/><stop offset="1" stopColor="#dca464"/></linearGradient>
       <radialGradient id={`${id}-rain-mist`}><stop stopColor="#b9c7cd" stopOpacity=".4"/><stop offset="1" stopColor="#c4cbd0" stopOpacity="0"/></radialGradient>
-      <linearGradient id={`${id}-puddle`} x2="0" y2="1"><stop stopColor="#9fadb9" stopOpacity=".25"/><stop offset="1" stopColor="#c1bacb" stopOpacity=".06"/></linearGradient>
+      <linearGradient id={`${id}-puddle`} x2="0" y2="1"><stop stopColor="#9bafbf" stopOpacity=".38"/><stop offset=".5" stopColor="#c9d2db" stopOpacity=".32"/><stop offset="1" stopColor="#b2a9c6" stopOpacity=".18"/></linearGradient>
       <mask id={`${id}-rain-shelter`} maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="450">
         <rect width="600" height="450" fill="white"/>
         <path d="M182 123Q196 29 310 31Q422 31 440 123L404 426H143Z" fill="black"/>
@@ -160,33 +163,7 @@ export function StoryIllustration({ chapter, motion, manual, registerRenderer }:
       </g>
     </g>}
     {chapter === 0 && <SakuraTree/>}
-    {chapter === 1 && <g aria-hidden="true">
-      <ellipse cx="300" cy="210" rx="250" ry="205" fill={`url(#${id}-rain-mist)`}/>
-      <g fill={`url(#${id}-puddle)`} stroke="#a1adba" strokeOpacity=".18" strokeWidth=".7">
-        <ellipse cx="292" cy="418" rx="157" ry="15"/>
-        <ellipse cx="113" cy="401" rx="43" ry="6"/>
-        <ellipse cx="471" cy="407" rx="48" ry="7"/>
-      </g>
-      <g mask={`url(#${id}-rain-shelter)`} stroke="#879dab" strokeLinecap="round">
-        {raindrops.map((drop, index) => {
-          const pose = rainPose(index, 0)
-          return <path className="rain-streak" key={index} transform={`translate(${pose.x} ${pose.y})`} d={`M0 0l${-drop.length * .13} ${drop.length}`} strokeWidth={index % 3 === 0 ? 1.25 : .75} opacity={drop.opacity}/>
-        })}
-      </g>
-      <g fill="none" stroke="#8b9eae" strokeWidth=".8">
-        {[ [100, 401], [130, 404], [457, 408], [490, 405], [177, 421], [397, 420], [222, 426], [352, 428] ].map(([cx, cy], index) => {
-          const ripple = ripplePose(index, 0)
-          return <ellipse key={index} className="rain-ripple" cx={cx} cy={cy} rx={ripple.radius} ry={ripple.radius * .23} opacity={ripple.opacity}/>
-        })}
-      </g>
-    </g>}
-    {chapter >= 2 && <g className="constellation" fill="none" stroke="#e0bd80" strokeWidth="1.6">
-      <path className="constellation-line" pathLength="1" strokeDasharray="1" d={heartOutline} stroke="#ead0a1" strokeOpacity=".45" strokeWidth=".9" strokeLinejoin="round" strokeLinecap="round"/>
-      {heartStars.map(([x,y],index)=><g className="constellation-star" key={index} stroke="none">
-        <circle cx={x} cy={y} r={index % 3 ? 2.5 : 4} fill={`url(#${id}-star-glow)`} opacity=".55"/>
-        <circle cx={x} cy={y} r={index % 3 ? .7 : 1.1} fill="#fff5df" opacity={index % 3 ? .75 : .95}/>
-      </g>)}
-    </g>}
+    {chapter === 1 && <RainGarden id={id}/>}
     <g style={{ '--dress-fill': `url(#${id}-dress)`, '--shirt-fill': `url(#${id}-shirt)` } as React.CSSProperties}>
       {chapter <= 2 ? <StandingPair chapter={chapter}/> : chapter === 3 ? <EmbracingPair/> : <SeatedPair/>}
     </g>

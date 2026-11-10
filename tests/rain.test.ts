@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { raindrops, rainPose, ripplePose } from '../src/lib/rain.ts'
+import { raindrops, rainPose, ripplePose, umbrellaDripPose, splashPose } from '../src/lib/rain.ts'
 
 test('rain replays deterministically and stays within the illustrated scene', () => {
   for (let index = 0; index < raindrops.length; index++) {
@@ -11,6 +11,21 @@ test('rain replays deterministically and stays within the illustrated scene', ()
       assert.ok(pose.x >= 0 && pose.x <= 551)
     }
     assert.deepEqual(rainPose(index, NaN), rainPose(index, 0))
+  }
+})
+
+test('umbrella runoff stays beside the couple and splash motion remains bounded', () => {
+  for (let index = 0; index < 8; index++) {
+    for (const time of [0, .2, 1, 5, 20, NaN, -1]) {
+      const drip = umbrellaDripPose(index, time)
+      assert.ok(drip.y >= 124 && drip.y <= 407)
+      assert.ok(drip.x < 190 || drip.x > 430)
+      assert.ok(drip.opacity >= 0 && drip.opacity <= .65)
+      assert.deepEqual(drip, umbrellaDripPose(index, time))
+      const splash = splashPose(index, time)
+      assert.ok(splash.height >= 0 && splash.height <= 4)
+      assert.ok(splash.opacity >= 0 && splash.opacity <= .5)
+    }
   }
 })
 
