@@ -13,6 +13,24 @@ const stars = (() => {
   return points
 })()
 
+const fireflies = (() => {
+  let seed = 1927
+  const random = () => { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646 }
+  return Array.from({ length: 26 }, (_, index) => ({
+    // Keep the brightest insects around the garden rather than over the copy.
+    x: index % 3 === 0 ? 78 + random() * 18 : 4 + random() * 49,
+    y: 32 + random() * 61,
+    size: 1.4 + random() * 1.8,
+    brightness: .45 + random() * .45,
+    driftX: 18 + random() * 42,
+    driftY: 15 + random() * 35,
+    duration: 17 + random() * 17,
+    pulse: 4.2 + random() * 5.6,
+    delay: -random() * 40,
+    hue: 66 + random() * 15,
+  }))
+})()
+
 export function NightSky() {
   const id = useId().replace(/:/g, '')
   return <div className="night-sky" aria-hidden="true">
@@ -30,6 +48,15 @@ export function NightSky() {
       '--star-opacity': brightness,
       animationDuration: `${8 + index % 7}s`, animationDelay: `${-index * 1.37}s`,
     } as CSSProperties}/>)}
+    </div>
+    <div className="sky-fireflies">
+      {fireflies.map((fly, index) => <span key={index} className="sky-firefly" style={{
+        left: `${fly.x}%`, top: `${fly.y}%`,
+        '--fly-size': `${fly.size}px`, '--fly-brightness': fly.brightness,
+        '--fly-x': `${fly.driftX}px`, '--fly-y': `${fly.driftY}px`,
+        '--fly-duration': `${fly.duration}s`, '--fly-pulse': `${fly.pulse}s`,
+        '--fly-delay': `${fly.delay}s`, '--fly-hue': fly.hue,
+      } as CSSProperties}><span className="firefly-light" /></span>)}
     </div>
   </div>
 }
