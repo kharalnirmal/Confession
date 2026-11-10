@@ -1,6 +1,6 @@
 <div align="center">
 
-# A Little Universe for Two ♡
+# Confession ♡
 
 **An interactive love letter. A little moment, just for your favorite person.**
 
@@ -13,7 +13,7 @@ Soft flowers, quiet music, and a sky full of stars that slowly becomes a heart.
 [![Vite](https://img.shields.io/badge/Vite-8-28364c?logo=vite)](https://vite.dev/)
 [![GSAP](https://img.shields.io/badge/Animation-GSAP-28364c?logo=greensock)](https://gsap.com/)
 
-**[Visit the website](https://lovingpartner.vercel.app) · [Report an issue](https://github.com/kharalnirmal/love/issues)**
+**[Visit the website](https://lovingpartner.vercel.app) · [Report an issue](https://github.com/kharalnirmal/Confession/issues)**
 
 </div>
 
@@ -21,7 +21,7 @@ Soft flowers, quiet music, and a sky full of stars that slowly becomes a heart.
 
 ## A small story. An infinite kind of love.
 
-This is a small, personal web experience that turns “I love you” into something you can watch unfold. It begins with a message that almost stayed a draft, then moves through five illustrated chapters—from a first hello to the comfort of simply being together.
+Confession is a small, personal web experience that turns “I love you” into something you can watch unfold. It begins with a message that almost stayed a draft, then moves through five illustrated chapters—from a first hello to the comfort of simply being together.
 
 No account. No form to fill out. Just open it, choose music or quiet, and enjoy the moment.
 
@@ -39,7 +39,9 @@ No account. No form to fill out. Just open it, choose music or quiet, and enjoy 
 
 - **Five illustrated chapters** — a first hello, everyday moments, a starry sky, an embrace, and a quiet ending.
 - **A letter-like opening** — a typed message addressed to **My Love ❤️**, followed by a gentle reveal.
-- **Stars that tell a story** — a line slowly connects selected stars into a heart, surrounded by a naturally scattered night sky.
+- **Stars that tell a story** — a smooth line draws from the bottom through each star to close a heart, then glows softly above the couple. Varied stars fill the sky from left to right.
+- **Rain worth staying for** — layered rainfall, umbrella drips, irregular reflective puddles, overlapping ripples, and tiny splashes.
+- **A living garden** — butterflies beside the welcome message and warm yellow-green fireflies drifting near the ground at night.
 - **Flowers with a breeze** — connected stems, shaded leaves, fine veins, and softly swaying blossoms.
 - **A day-to-night palette** — warm cream and dusty pink transition into moonlit blue.
 - **Optional background music** — choose music or silence; pause and replay the story.
@@ -51,8 +53,8 @@ No account. No form to fill out. Just open it, choose music or quiet, and enjoy 
 Use **Node.js 24 LTS** and npm.
 
 ```bash
-git clone https://github.com/kharalnirmal/love.git
-cd love
+git clone https://github.com/kharalnirmal/Confession.git
+cd Confession
 npm ci
 npm run dev
 ```
@@ -65,7 +67,7 @@ Open the local URL printed by Vite.
 | `npm run build` | Type-check and create the production build in `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Run ESLint |
-| `npm test` | Run the story timing and cue-sheet tests |
+| `npm test` | Run story timing, character motion, constellation, rain, and asset tests |
 
 ## Make it yours
 
@@ -73,11 +75,15 @@ Open the local URL printed by Vite.
 | --- | --- |
 | Chapter titles and on-screen lines | [`src/content/story.ts`](src/content/story.ts) |
 | Opening message and recipient name | [`src/components/MessageOpening.tsx`](src/components/MessageOpening.tsx) |
-| Welcome screen, music controls, and signature | [`src/App.tsx`](src/App.tsx) |
+| Welcome screen and music controls | [`src/App.tsx`](src/App.tsx) |
+| Final page and social links | [`src/components/EndingSequence.tsx`](src/components/EndingSequence.tsx) |
 | Colors, typography, layout, and transitions | [`src/App.css`](src/App.css) |
 | Floral borders and leaves | [`FloralFrame.tsx`](src/components/FloralFrame.tsx) and [`BotanicalLeaf.tsx`](src/components/BotanicalLeaf.tsx) |
-| Full-width stars and moon | [`src/components/NightSky.tsx`](src/components/NightSky.tsx) |
-| Illustrated scenes and heart constellation | [`src/components/StoryIllustration.tsx`](src/components/StoryIllustration.tsx) |
+| Full-width stars, moon, and fireflies | [`src/components/NightSky.tsx`](src/components/NightSky.tsx) |
+| Heart constellation geometry and timing | [`SkyConstellation.tsx`](src/components/SkyConstellation.tsx) and [`constellation.ts`](src/lib/constellation.ts) |
+| Rain, puddles, and splashes | [`RainGarden.tsx`](src/components/RainGarden.tsx) and [`rain.ts`](src/lib/rain.ts) |
+| Welcome butterflies | [`src/components/ButterflyAccent.tsx`](src/components/ButterflyAccent.tsx) |
+| Illustrated scenes | [`src/components/StoryIllustration.tsx`](src/components/StoryIllustration.tsx) |
 | Story pacing | [`src/hooks/useStoryPlayback.ts`](src/hooks/useStoryPlayback.ts) |
 | Soundtrack URL and cue metadata | [`src/content/cueSheet.ts`](src/content/cueSheet.ts) |
 
