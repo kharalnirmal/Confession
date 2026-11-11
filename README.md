@@ -61,6 +61,8 @@ npm run dev
 
 Open the local URL printed by Vite.
 
+To check the production version locally, run `npm run build` followed by `npm run preview`.
+
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the development server |
