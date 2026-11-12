@@ -1,0 +1,52 @@
+name: Bug report
+description: Report a reproducible problem with the experience.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please search existing issues first. Do not include private messages, credentials, or personal recordings.
+  - type: input
+    id: version
+    attributes:
+      label: URL or commit
+      description: Which deployment or local commit shows the problem?
+      placeholder: https://lovingpartner.vercel.app/ or a commit SHA
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Browser and device
+      description: Include browser version, OS, viewport/device, and whether reduced motion is enabled.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Start from a fresh page load. Include music/silence choice and the chapter or screen involved.
+      placeholder: |
+        1. Open the page
+        2. Choose ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Add screenshots or console errors if helpful. Remove personal information first.
+    validations:
+      required: true
+  - type: textarea
+    id: frequency
+    attributes:
+      label: Frequency and workarounds
+      description: Does reloading, choosing silence, or using a different browser change the result?
