@@ -52,3 +52,32 @@ test('heart drawing advances once from the bottom and only glows after closing',
   }
   assert.deepEqual(constellationPose(start + duration + glowDuration + .01), { progress: 1, glow: 1 })
 })
+
+test('heart geometry preserves mirrored lobes and sharp top and bottom cusps', () => {
+  const centerX = heartStars[0][0]
+  assert.equal(new Set(heartStars.map((point) => point.join(','))).size, heartStars.length)
+  for (let index = 1; index < heartStars.length; index++) {
+    const mirror = heartStars[heartStars.length - index]
+    assert.ok(Math.abs(heartStars[index][0] + mirror[0] - centerX * 2) < 1e-10)
+    assert.equal(heartStars[index][1], mirror[1])
+  }
+  for (const cusp of [0, 7]) {
+    assert.deepEqual(heartCurveSegments[cusp].control1, heartStars[cusp])
+    const incoming = heartCurveSegments[(cusp + heartStars.length - 1) % heartStars.length]
+    assert.deepEqual(incoming.control2, heartStars[cusp])
+  }
+})
+
+test('constellation timing has exact phase endpoints and a smooth midpoint', () => {
+  const { start, duration, glowDuration } = constellationTiming
+  assert.deepEqual(constellationPose(start), { progress: 0, glow: 0 })
+  assert.deepEqual(constellationPose(start + duration / 2), { progress: .5, glow: 0 })
+  assert.deepEqual(constellationPose(start + duration), { progress: 1, glow: 0 })
+  assert.ok(Math.abs(constellationPose(start + duration + glowDuration / 2).glow - .5) < 1e-12)
+  for (const clock of [-1, -Infinity, Infinity, NaN]) {
+    assert.deepEqual(constellationPose(clock), constellationPose(0))
+  }
+  for (const star of constellationField) {
+    assert.ok(star.opacity >= .22 && star.opacity <= .68)
+  }
+})
