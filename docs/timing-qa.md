@@ -1,4 +1,13 @@
-# Milestone 1 verification
+# Historical timing and playback QA
+
+This file records earlier milestones, including implementations that have since
+been replaced. It is not a current release checklist. In particular, references
+to manual reading, development-only music, options dialogs, and an audio-driven
+main story describe historical versions. See [current playback architecture](playback-architecture.md)
+for the active flow and [soundtrack packaging](music-preview.md) for the deployed asset.
+The recorded browser results below have not been re-run merely by updating this notice.
+
+## Milestone 1 verification
 
 - `npm run build`: passed.
 - `npm run lint`: passed.
