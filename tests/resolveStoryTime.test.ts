@@ -52,3 +52,49 @@ test('rejects cue overlap, duplicate ids, and out-of-chapter cues', () => {
 test('rejects missing source, identity, or chapters', () => {
   assert.ok(validateTrack({ ...track, src: '', assetVersion: '', chapters: [] }).length)
 })
+
+test('rejects whitespace identity, invalid durations, and empty cue content independently', () => {
+  for (const field of ['src', 'assetVersion'] as const) {
+    assert.ok(validateTrack({ ...track, [field]: ' \t\n' }).includes('Track source and asset version are required.'))
+  }
+  for (const expectedDuration of [0, -1, NaN, Infinity, -Infinity]) {
+    assert.ok(validateTrack({ ...track, expectedDuration }).includes('Track duration must be positive and finite.'))
+  }
+  assert.ok(validateTrack({ ...track, cues: [{ ...track.cues[0], id: ' ' }] }).includes('Cue 0 needs a unique identifier.'))
+  assert.ok(validateTrack({ ...track, cues: [{ ...track.cues[0], text: '\t' }] }).includes('Cue 0 needs text.'))
+})
+
+test('accepts caption gaps and adjacent cues without leaking an expired caption', () => {
+  const adjacent: TrackDefinition = {
+    ...track,
+    cues: [track.cues[0], { ...track.cues[0], id: 'next', start: 4, end: 6 }],
+  }
+  assert.deepEqual(validateTrack(adjacent), [])
+  assert.equal(resolveStoryTime(adjacent, .999).cue, null)
+  assert.equal(resolveStoryTime(adjacent, 3.999).cue?.id, 'hello')
+  assert.equal(resolveStoryTime(adjacent, 4).cue?.id, 'next')
+  assert.equal(resolveStoryTime(adjacent, 6).cue, null)
+  assert.deepEqual(validateTrack({ ...track, cues: [] }), [])
+  assert.equal(resolveStoryTime({ ...track, cues: [] }, 2).cue, null)
+})
+
+test('resolves every chapter boundary and clamps only the completed local time', () => {
+  for (const [index, chapter] of track.chapters.entries()) {
+    const result = resolveStoryTime(track, chapter.start)
+    assert.equal(result.sceneId, chapter.sceneId)
+    assert.equal(result.chapterIndex, index)
+    assert.equal(result.localTime, 0)
+    assert.equal(result.completed, false)
+    assert.equal(resolveStoryTime(track, chapter.end - .001).chapterIndex, index)
+  }
+  assert.equal(resolveStoryTime(track, Number.MAX_VALUE).localTime, 10)
+  assert.deepEqual(resolveStoryTime(track, -Infinity), resolveStoryTime(track, 0))
+})
+
+test('rejects zero-length and non-finite cue intervals and missing cue chapters', () => {
+  for (const bounds of [{ start: 1, end: 1 }, { start: 4, end: 1 }, { start: -1, end: 2 }, { start: 1, end: Infinity }]) {
+    assert.ok(validateTrack({ ...track, cues: [{ ...track.cues[0], ...bounds }] }).includes('Cue 0 is outside its chapter.'))
+  }
+  const chapters = track.chapters.filter((chapter) => chapter.sceneId !== 'encounter')
+  assert.ok(validateTrack({ ...track, chapters }).includes('Cue 0 is outside its chapter.'))
+})
