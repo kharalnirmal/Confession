@@ -39,3 +39,41 @@ test('puddle ripples expand with a bounded, fading opacity', () => {
     }
   }
 })
+
+test('all rain effects normalize non-finite and negative story clocks', () => {
+  for (let index = 0; index < 8; index++) {
+    for (const time of [-1, -Infinity, Infinity, NaN]) {
+      assert.deepEqual(rainPose(index, time), rainPose(index, 0))
+      assert.deepEqual(umbrellaDripPose(index, time), umbrellaDripPose(index, 0))
+      assert.deepEqual(splashPose(index, time), splashPose(index, 0))
+      for (let ring = 0; ring < 3; ring++) {
+        assert.deepEqual(ripplePose(index, time, ring), ripplePose(index, 0, ring))
+      }
+    }
+  }
+})
+
+test('drop indices wrap and each falling drop repeats after its own cycle', () => {
+  for (let index = 0; index < raindrops.length; index++) {
+    const time = .371
+    assert.deepEqual(rainPose(index + raindrops.length, time), rainPose(index, time))
+    const cycle = 390 / raindrops[index].speed
+    const first = rainPose(index, time)
+    const repeated = rainPose(index, time + cycle)
+    assert.ok(Math.abs(first.x - repeated.x) < 1e-9)
+    assert.ok(Math.abs(first.y - repeated.y) < 1e-9)
+  }
+})
+
+test('concentric ripple rings stay finite and staggered throughout a full cycle', () => {
+  for (let index = 0; index < 8; index++) {
+    for (let step = 0; step <= 100; step++) {
+      const rings = [0, 1, 2].map((ring) => ripplePose(index, step / 65, ring))
+      for (const pose of rings) {
+        assert.ok(Number.isFinite(pose.radius) && pose.radius >= 2 && pose.radius < 17)
+        assert.ok(Number.isFinite(pose.opacity) && pose.opacity >= 0 && pose.opacity <= .4)
+      }
+      assert.equal(new Set(rings.map((pose) => pose.radius)).size, 3)
+    }
+  }
+})
