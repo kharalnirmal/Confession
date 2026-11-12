@@ -48,3 +48,29 @@ test('flower gesture is deterministic, bounded and handles invalid clocks', () =
   }
   for (const time of [-1, NaN, Infinity]) assert.deepEqual(flowerGesture(time), flowerGesture(0))
 })
+
+test('blink closes and opens continuously at the authored phase boundaries', () => {
+  const epsilon = 1e-7
+  for (const [key, offset] of [['womanBlink', 0], ['manBlink', 1.63]] as const) {
+    assert.equal(characterMotion(3.1 - offset - epsilon)[key], 1)
+    assert.ok(Math.abs(characterMotion(3.18 - offset)[key] - .06) < 1e-12)
+    assert.equal(characterMotion(3.33 - offset + epsilon)[key], 1)
+    for (const boundary of [3.1, 3.18, 3.33]) {
+      const before = characterMotion(boundary - offset - epsilon)[key]
+      const after = characterMotion(boundary - offset + epsilon)[key]
+      assert.ok(Math.abs(after - before) < .00001, `${key} jumps at ${boundary}`)
+    }
+    assert.ok(Math.abs(characterMotion(3.18 - offset)[key] - characterMotion(3.18 - offset + 5.7)[key]) < 1e-12)
+  }
+})
+
+test('flower handoff keeps the contact pose through the receiving interval', () => {
+  for (const time of [2.3, 2.5, 2.599, 2.6, 2.9, 3]) {
+    const pose = flowerGesture(time)
+    assert.equal(pose.givingAngle, 0)
+    assert.equal(pose.receivingAngle, 0)
+    assert.equal(pose.received, time >= 2.6)
+  }
+  assert.deepEqual(flowerGesture(-Infinity), flowerGesture(0))
+  assert.deepEqual(characterMotion(-Infinity), characterMotion(0))
+})
